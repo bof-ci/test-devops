@@ -1,3 +1,4 @@
 #!/bin/bash
 
-/usr/local/bin/testserver
+ip=$(hostname -i)
+/usr/local/bin/testserver -address $ip
