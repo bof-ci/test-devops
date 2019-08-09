@@ -76,8 +76,8 @@ func indexHnd(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.Parse()
 
-	fmt.Println("D.Labs Test App")
-	fmt.Println("https://dlabs.si")
+	fmt.Println("BoF Test App")
+	fmt.Println("https://www.businessoffashion.com")
 	fmt.Printf("\nStarting server at: http://%s:%s/ \n", *address, *port)
 
 	var isTLS bool
