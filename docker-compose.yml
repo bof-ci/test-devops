@@ -19,6 +19,7 @@ services:
 
   testserver:
     image: dlabs/testserver
+    stop_signal: SIGUSR1
     volumes:
       - ./entrypoint.sh:/entrypoint.sh
       - ./.env:/.env
