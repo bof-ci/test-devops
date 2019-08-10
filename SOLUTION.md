@@ -5,7 +5,7 @@ Estimation
 ----------
 Estimated: 8 hours
 
-Spent: 2.5 hours
+Spent: 4 hours
 
 
 Solution
@@ -42,3 +42,6 @@ Make it work with docker-compose (stop, restart): We can fix this by adding `sto
 You will notice that sending a SIGUSR1 to container won't have any effect. App just won't pickup that signal. Why? Can you solve this?
 Solution: Use exec "$@", It will replace the current running shell with the command that "$@" is pointing to.
 and we can add CMD ["/usr/local/bin/testserver", "-address", "0.0.0.0"] to Dockerfile.
+
+### 5. Docker images
+Optimisation: Right now we are using debian as base image if we replace that with alpine it will reduce the image size to 18mb

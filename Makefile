@@ -14,7 +14,7 @@ init-linux:
 
 build:
 	@docker build -f ./Dockerfile-build -t dlabs/testserver:build .
-	@docker run --rm -it -v $$(pwd):/go/src/github.com/dlabs/testserver -e "GOOS=linux" -e "GOARCH=amd64" dlabs/testserver:build go build -o release/testserver_linux_64 github.com/dlabs/testserver
+	@docker run --rm -it -v $$(pwd):/go/src/github.com/dlabs/testserver -e "CGO_ENABLED=0" -e "GOOS=linux" dlabs/testserver:build go build -o release/testserver_linux_64 github.com/dlabs/testserver
 
 image:
 	@docker build -t dlabs/testserver:latest .

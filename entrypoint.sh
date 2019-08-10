@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 set -o allexport
 
-. .env
+source /.env
 
 exec "$@"
