@@ -5,7 +5,7 @@ Estimation
 ----------
 Estimated: 8 hours
 
-Spent: 1.5 hour
+Spent: 2 hours
 
 
 Solution
@@ -13,7 +13,7 @@ Solution
 Comments on your solution
 
 
-## Initial setup
+### Initial setup
 
 Go application is by default listening on 127.0.0.1 because of this
 ```
@@ -27,5 +27,12 @@ ip=$(hostname -i)
 to `entrypoint.sh`
 started docker-compose with -d to see the logs, from the logs it is clear main.go is listening on 127.0.0.1. Ping from nginx to testserver was working fine.
 
-## Nginx as a loadbalancer
+### Nginx as a loadbalancer
 If I understood correctly the problem it's about nginx never resolve DNS on runtime, just at startup, but we can force nginx to re-resolve DNS during the application uptime using resolver.
+
+## Environment configuration
+We can use to set .env file variables as environment variables
+```
+set -o allexport
+. .env
+```
