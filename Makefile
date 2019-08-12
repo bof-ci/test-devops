@@ -20,6 +20,12 @@ image:
 	@docker build -t dlabs/testserver:latest .
 
 certs:
-	@openssl genrsa -out crt/self-ssl.key
-	@openssl req -new -key crt/self-ssl.key -out crt/self-ssl.csr -config crt/csr.conf
-	@openssl x509 -req -days 365 -in crt/self-ssl.csr -signkey crt/self-ssl.key -out crt/self-ssl.crt -extensions req_ext -extfile crt/csr.conf
+	@openssl genrsa -out crt/rootCA.key 4096
+	@openssl req -x509 -new -nodes -key crt/rootCA.key -sha256 -days 1024 -out crt/rootCA.crt -config crt/csr.conf
+	@openssl genrsa -out crt/testserver.lan.key 2048
+	@openssl req -new -key crt/testserver.lan.key -out crt/testserver.lan.csr -config crt/csr.conf
+	@openssl x509 -req -in crt/testserver.lan.csr -CA crt/rootCA.crt -CAkey crt/rootCA.key -CAcreateserial -out crt/testserver.lan.crt -days 500 -sha256
+
+	@openssl genrsa -out crt/client.key 2048
+	@openssl req -new -key crt/client.key -out crt/client.csr -config crt/client.conf
+	@openssl x509 -req -in crt/client.csr -CA crt/rootCA.crt -CAkey crt/rootCA.key -CAcreateserial -out crt/client.crt -days 500 -sha256

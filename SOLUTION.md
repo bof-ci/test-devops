@@ -5,7 +5,7 @@ Estimation
 ----------
 Estimated: 8 hours
 
-Spent: 5.5 hours
+Spent: 7.5 hours
 
 
 Solution
@@ -53,3 +53,12 @@ Imagine that you have an app with the following requirements:
 - NodeJS (for building frontend assets)
 
 I would like to have one base image that contains PHP runtime, for PHP and Ruby apps and another one for Nodejs. 
+
+### 6. TLS
+Done
+
+#### 6.1 SSL termination
+Done
+
+#### 6.2 Secure testserver and provide authentication with TLS
+Unable to figure it out how it fix it :-(
