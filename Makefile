@@ -20,4 +20,6 @@ image:
 	@docker build -t dlabs/testserver:latest .
 
 certs:
-	@echo "Not implemented"
+	@openssl genrsa -out crt/self-ssl.key
+	@openssl req -new -key crt/self-ssl.key -out crt/self-ssl.csr -config crt/csr.conf
+	@openssl x509 -req -days 365 -in crt/self-ssl.csr -signkey crt/self-ssl.key -out crt/self-ssl.crt -extensions req_ext -extfile crt/csr.conf
