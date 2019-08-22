@@ -171,4 +171,4 @@ Problem 7: why isn't the name field populated.
 
 After doing a victory lap and running `curl` a bunch of times, I noticed the `name` field wasn't being populated.
 
-Poked around at the go code and saw it was looking for that value from the X-NAME header. Configured nginx to pass that in with the value `wolverine`, the name of the coolest X-Man. <img src="wolverine.png" height="32" width="32">
+Poked around at the go code and saw it was looking for that value from the X-NAME header. Configured nginx to pass that in with the value `wolverine`, the name of the coolest X-Man. <img src="wolverine.png" height="24" width="24">
