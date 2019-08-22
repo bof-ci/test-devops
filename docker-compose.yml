@@ -14,7 +14,7 @@ services:
       - HTTPS_PORT=${COMPOSE_HTTPS_PORT}
     depends_on:
       - testserver
-    command: /bin/bash -c "envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+    command: /bin/bash -c "cp /etc/nginx/conf.d/default.conf.template /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
     restart: always
 
   testserver:
@@ -24,6 +24,7 @@ services:
       - ./.env:/.env
       - ./crt:/crt
     restart: always
+    stop_signal: SIGUSR1
 
 networks:
   default:
