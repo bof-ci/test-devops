@@ -141,7 +141,6 @@ Assumptions:
 * No breaking or non-backwards compatible changes made to PHP scripts -- any such changes would be behind feature flags or other toggling solution
 * Both Sidekiq and Nodejs will call PHP scripts for various reasons.
 
-
 I'd create PHP and Ruby containers that have the appropriate runtimes and slimmed down using techniques listed above. The Nodejs assets would be better served by using some sort of global caching system (akamai, cloudfront, etc) so the build process would look something like:
 
 * Each container/package would have its own repo
@@ -172,4 +171,4 @@ Problem 7: why isn't the name field populated.
 
 After doing a victory lap and running `curl` a bunch of times, I noticed the `name` field wasn't being populated.
 
-Poked around at the go code and saw it was looking for that value from the X-NAME header. Configured nginx to pass that in with the value `wolverine`, the name of the coolest X-Man. ![wolverine](wolverine.png)
+Poked around at the go code and saw it was looking for that value from the X-NAME header. Configured nginx to pass that in with the value `wolverine`, the name of the coolest X-Man. ![wolverine](wolverine.png =32x32)
