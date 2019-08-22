@@ -3,20 +3,15 @@ SOLUTION
 
 Estimation
 ----------
-Estimated: 4 hours
+* Estimated: 4 hours
+* Spent: 7 hours
 
-Spent: 7 hours
 
-
-Solution
+Solutions
 --------
-Comments on your solution
+#### Problem 1: bad gateway
 
-Problem 1: bad gateway
-
-502 errors are usually caused because the load balancer can't hit the backend service.
-
-Log into docker container and check to see if it responds locally:
+502 errors are usually caused because the load balancer can't hit the backend service. So let's log into docker container and check to see if it responds locally:
 
     docker ps                                           # find docker container id
     docker exec -it -u root b643b09c5bae /bin/bash      # log in
@@ -24,15 +19,14 @@ Log into docker container and check to see if it responds locally:
     ps aux                                              # see that service is running
     curl -i localhost:8800                              # see that service is responding
 
-So according to the app container, service is running fine. Looks for bad wiring between the two containers? Log into LB container and see if we can connect.
+According to the app container, service is running fine. Looks like bad wiring between the two containers? Log into LB container and see if we can connect.
 
-    docker ps
-    docker exec -it -u root 9aca2870a04e /bin/bash
+    docker ps                                                # find docker container id
+    docker exec -it -u root 9aca2870a04e /bin/bash           # log in
     apt-get update && apt-get install -y procps curl netcat  # install tools
-    curl -i testserver:8800                                 # no dice!
+    curl -i testserver:8800                                  # no dice!
 
-Okay, so the LB container can't connect to the app container. Looking at the docker-compose, there's no port listing for the app container, so tried adding that in.
-That got us some progress.
+Okay, so the LB container can't connect to the app container. Looking at the docker-compose, there's no port listing for the app container, so tried adding that in. That got us some progress. We were getting
 
     $ curl localhost:8800
     curl: (7) Failed to connect to localhost port 8800: Connection refused
@@ -54,9 +48,9 @@ that's a new one for me. Did a bit of googling and found some information about 
 
     {"hostname":"fd1463c65069","name":"","email":"","project":"","ip":"172.80.1.2"}
 
-Was curious to see if I still needed the port mapping, so I removed that and it still worked, so I removed that bit from the compose file.
+Was curious to see if I still needed the port mapping in the docker-compose file, so I removed that and it still worked, so I removed that bit from the compose file.
 
-Problem 2: Configure Nginx to load balance without restart
+#### Problem 2: Configure Nginx to load balance without restart
 
 Ran `curl -i testserver.lan` a few times in a row and hostname was `77b764c27ce4` for each value, indicating it is not routing to each LB container. Per the documentation, I restarted the nginx container by looking up the container id and then running the command `docker restart 9cc376d74cfd`. After which, each curl command returned a different hostname.
 
@@ -64,27 +58,28 @@ The nginx configuration is just pointing to `testserver.lan`, depending on the d
 
 After some debugging, I realized that the first thing the LB container is doing is running `envsubt` to basically just copy the file from one location to another, which was interpretting my var declaration as a env var to be substituted. As it stands now, no vars are being substituted, removed that. After that, I deployed 6 app servers, and each curl call (usually) would direct me to a different hostname.
 
-Problem 3: Configure entrypoint.sh to consume .env
+#### Problem 3: Configure entrypoint.sh to consume .env
 
 Added `source .env` to enterpoint.sh. `curl` call responded but without the project variable populated. Added debug message to `entrypoint.sh` to echo the value of `$COMPOSE_PROJECT_NAME` to see what would happen.
 
     testserver_1    | COMPOSE_PROJECT_NAME is [testserver]
 
-So the go app can't see it. Added an export directive to the entrypoint.sh and voila, the project field is populated. But that sucks if we ever need to add another variable, because we have to list it in both places. Instead I swapped out the export logic for:
+So the app can't see it. Added an `export` directive to the entrypoint.sh and voila, the project field is populated. But that sucks if we ever need to add another variable, because we have to list it in both places. Instead I swapped out the export logic for:
 
     set -a
     . ./.env
     set +a
 
-The `a` flag exports everything.
+The `a` flag exports everything so now we are set for life.
 
-Problem 4: Gracefully shutdown the app by sending it a SIGUSR1 signal.
+#### Problem 4: Gracefully shutdown the app by sending it a SIGUSR1 signal.
 
 Tried calling `docker-compose kill -s SIGUSR1 testserver` and docker-compose said it was killing the containers, but `docker ps` showed them still alive. Let's take the hint and log into the container:
 
     docker ps
     docker exec -it -u root 3c4b332741b3 /bin/bash
     apt-get update && apt-get install -y procps curl netcat dnsutils
+    ps aux
 
 Logged in and looked at the processes. Ran the kill command again, and no change to any of the processes. Hm. After a quick google, added this to the docker-compose.yml
 
@@ -94,7 +89,7 @@ Docker down'd and up'd and tried to kill again, and they still remained! This is
 
 As an added bonus, the `make` call completes about 10s faster.
 
-Problem 5.1: Slim down the docker image
+#### Problem 5.1: Slim down the docker image
 
 Let's see how big the image is:
 
@@ -133,7 +128,7 @@ That brings the docker image size down under 15 MB:
     REPOSITORY          TAG                 IMAGE ID            CREATED              SIZE
     dlabs/testserver    latest              3eb5ad6aa528        4 minutes ago        14.1MB
 
-Problem 5.2: Organization
+#### Problem 5.2: Organization
 
 Assumptions:
 * all three are running separately -- ie there's no desire to have them all in the same container.
@@ -147,28 +142,35 @@ I'd create PHP and Ruby containers that have the appropriate runtimes and slimme
 * A build pipeline would trigger on changes made to each repo
 * Pipeline will build the container/package, and then follow appropriate deployment steps to automatically push out changes
 
-Problem 6: Create certs
+It might make sense to have the PHP and Ruby containers both build from the same custom base image if there's some stuff we need installed on both.
+
+#### Problem 6: Create certs
 
 Added the following command to the Makefile:
 
     openssl req -x509 -newkey rsa:4096 -keyout crt/testdevops.pem -out crt/testdevops.crt -days 365
 
-Problem 6.1: SSL Termination
+#### Problem 6.1: SSL Termination
 
-Now that we have our certs, we have to make nginx use them. The requires just telling it to listen on 443 and the location of the cert and key files.
+Now that we have our certs, we have to make nginx use them. The requires just telling it to listen on 443 and the location of the cert and key files. Made those changes, restarted, and the app started responding on https.
 
-Problem 6.2: TLS between LB and App
+#### Problem 6.2: TLS between LB and App
 
 To get encryption / auth between the LB and the app server, first thing we'll need is a bunch stuff generated by openssl. Put that all into `make certs`, as well as renamed the lb certs to specifically point out that they're for the load balancer.
 
 *Note*: to keep things easy for me, I just hardcoded the password for the certs into the makefile. In the "real world" you'd want to pull that from a secrets manager.
 
-Once I was sure that there was no problem with the new cert names, they neeed to be wired into the app and nginx. I updated entrypoint.sh to take in the new files, and then I updated the nginx configuration to pass in the appropriate matching certs and keys.
+Once I was sure that there was no problem with the new cert names, they neeed to be wired into the app and nginx. I updated `entrypoint.sh` to take in the new files, and then I updated the nginx configuration to pass in the appropriate matching certs and keys.
 
 Honestly, it took a second to make sure I had the right paths but it once I got that set it worked the first time which more was shocking to me than anyone.
 
-Problem 7: why isn't the name field populated.
+#### Problem 7: why isn't the name field populated.
 
 After doing a victory lap and running `curl` a bunch of times, I noticed the `name` field wasn't being populated.
 
 Poked around at the go code and saw it was looking for that value from the X-NAME header. Configured nginx to pass that in with the value `wolverine`, the name of the coolest X-Man. <img src="wolverine.png" height="24" width="24">
+
+#### Miscellany
+
+* Added a `make clean` step that clears out all the docker images, as well as the cert & release dirs.
+* Added curl calls to the `init-mac` step so that if I broke something I'd know it. If this was something I was going to have to maintain after tomorrow, I'd probably put in tests for each of the problem's solutions so I would be more confident none of them broke.
